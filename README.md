@@ -45,6 +45,7 @@ export ROS_MASTER_URI=http://TRUCK_IP:11311
 ```
 
 Follow this tutorial to set up the joy node http://wiki.ros.org/joy/Tutorials/ConfiguringALinuxJoystick
+
 run 
 ```
 #!python
@@ -54,6 +55,7 @@ rosrun joy joy_node _autorepeat:=50
 
 Clone the hw_api_ackermann repo and build it
 Clone this repo and compile it on your computer
+
 run 
 ```
 #!python
@@ -65,7 +67,7 @@ rosrun joy_to_ackermann converter.py
 
 enjoy and drive responsibly
 
-holdleft and right trigger to drive
+hold left and right trigger to drive
 
 steering: left joystick
 
