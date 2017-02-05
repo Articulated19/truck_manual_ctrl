@@ -3,70 +3,207 @@
 import rospy
 from hw_api_ackermann.msg import AckermannDrive
 from sensor_msgs.msg import Joy
+from math import *
+
+"""
+
+coalesce_interval should be 1/50 to match the autorepeat
+
+values estimated with autorepeat_rate = 50 in mind, but not tested on the truck
+
+angle rate should be about 0.6 degrees every call
+lets say 0.3 is the constant part
+lets say coefficient part varies from 0.6 to 0
+
+speed rate should be about 0.03 every call
+lets say 0.02 is constant
+and coefficient part varies between 0.02 to 0
+
+slow_down_rate should be about 0.015
+lets say 0.01 is constant
+and coefficient part varies between 0.01 and 0
+
+"""
 
 
-pub = rospy.Publisher('steeringAngle', AckermannDrive, queue_size=10)
-current_steering_angle = 50 
-current_speed = 46
+class JoyToAckermann:
+    def __init__(self):
+        self.current_steering_angle = 0 
+        self.current_speed = 0 
+        self.MAX_ANGLE = 16.0
+        self.MIN_ANGLE = -21.0
+        self.MAX_SPEED = 1.4
+        self.MIN_SPEED = -0.97
+        
+        self.mode = 1
+        self.prev_select = 0
+
+        self.STEER_RATE_CONSTANT = 0.3
+        self.STEER_COEFFICIENT = 0.016
+
+        self.ACC_RATE_CONSTANT = 0.03
+        self.ACC_RATE_COEFFICIENT = 0.084
+
+        self.SLOW_DOWN_RATE_CONSTANT = 0.01
+        self.SLOW_DOWN_COEFFICIENT = 0.07
+
+        self.pub = rospy.Publisher('truck_cmd', AckermannDrive, queue_size=10)
+
+        rospy.init_node('joy_converter', anonymous=False)
+        rospy.Subscriber("joy", Joy, self.callback)
 
 
-def callback(data):
-    joystick = data.axes[0]
-    throttle = data.buttons[0]
-    reverse = data.buttons[1]
-    samethrottle = data.buttons[3]
-    ltrigger = data.axes[2]
-    rtrigger = data.axes[5]
-    
-    
-    newspeed = 46
-    newangle = 50
-    global current_speed
-    global current_steering_angle
-    if(ltrigger == -1 and rtrigger == -1):
-        targetangle = -joystick*75+50
-        if targetangle < current_steering_angle:
-            newangle = max(current_steering_angle-2, targetangle)
+
+    def getTargetAngle(self, left_joy):
+        if left_joy >= 0:
+            return left_joy * self.MAX_ANGLE
         else:
-            newangle = min(current_steering_angle+2, targetangle)
+            return left_joy * self.MIN_ANGLE
 
-        if throttle == 1:
-            newspeed = min(65,current_speed + 0.5)
-            newspeed = max(48,newspeed)
-        elif samethrottle == 1:
-            newspeed = 55
-        elif reverse == 1:
-            newspeed = max(20,current_speed - 0.5)
-            newspeed = min(28,newspeed)
-        else:
-            newspeed = max(46,current_speed - 0.2)
-    else:
-        newangle = 50
-        newspeed = 46
+    def leftTurnRate(self, cur_angle):
+        c = self.STEER_COEFFICIENT
+        return self.STEER_RATE_CONSTANT + (-c)*cur_angle + c*self.MAX_ANGLE
     
-    ack = AckermannDrive()
-    ack.steering_angle = newangle
-    ack.speed = newspeed
+    def rightTurnRate(self, cur_angle):
+        c = self.STEER_COEFFICIENT
+        return self.STEER_RATE_CONSTANT + c*cur_angle - c*self.MIN_ANGLE
 
-    current_speed = newspeed
-    current_steering_angle = newangle
+    def getDeAccRate(self, cur_speed):
+        c = self.ACC_RATE_COEFFICIENT
+        return self.ACC_RATE_CONSTANT + c*cur_speed + c*self.MIN_SPEED
 
-    print ack
+    def getAccRate(self, cur_speed):
+        c = self.ACC_RATE_COEFFICIENT
+        return self.ACC_RATE_CONSTANT + (-c)*cur_speed + c*self.MAX_SPEED
 
-    pub.publish(ack)
+    def getSlowDownRate(self, cur_speed):
+        return self.SLOW_DOWN_RATE_CONSTANT + self.SLOW_DOWN_COEFFICIENT * abs(cur_speed)
 
 
-def converter():
-    pub = rospy.Publisher('steeringAngle', AckermannDrive, queue_size=10)
-    rospy.init_node('joy_converter', anonymous=False)
-    print "haoeaaeoa"
-    rospy.Subscriber("joy", Joy, callback)
+    def getNewAngle(self, left_joy):
+        targetangle = self.getTargetAngle(left_joy)
 
-    rospy.spin()
+        #steering
+        if targetangle > self.current_steering_angle:
+            #left
+            rate = self.leftTurnRate(self.current_steering_angle)
+            return = min(targetangle, self.current_steering_angle + rate)
+        
+        else:
+            #right
+            rate = self.rightTurnRate(self.current_steering_angle)
+            return = max(targetangle, self.current_steering_angle - rate)
+
+
+    def callback(self,data):
+
+        """
+        Ps3 controls:
+
+        L2 not pressed = truck stops (can still steer)
+        R2 = accelerate/reverse
+        select = change mode between forward/backwards (for R2)
+
+        Left stick = turn
+
+        X = accelerate
+        O = reverse
+        Δ = like X but stops at a certain (slow) speed
+        □ = like Δ but higher limit
+
+        L1 = like O but stops at a certain speed
+
+        """
+
+        left_joy      = data.axes[?]         # 1 = left, -1 = right
+        a_button      = data.buttons[?]    
+        b_button      = data.buttons[?] 
+        x_button      = data.buttons[?]
+        y_button      = data.buttons[?]
+        left_bumper   = data.buttons[?]
+        left_trigger  = data.axes[?]         # -1 = pressed, 1 = not pressed
+        right_trigger = data.axes[?]         # -1 = pressed, 1 = not pressed
+        select_but    = data.buttons[?]        #select buton ps3 controller
+
+        
+        newangle = self.getNewAngle(left_joy)
+
+        if select_but == 1:
+            if self.prev_select == 0:
+                self.mode *= -1
+                    
+            self.prev_select = select_but
+
+
+        no_gas = False
+
+        if left_trigger == -1:
+
+            if right_trigger != 1:
+                
+                if self.mode == 1:
+                    targetspeed = ((2 - (right_trigger+1))/2.0) * self.MAX_SPEED
+                    
+                else:
+                    targetspeed = ((2 - (right_trigger+1))/2.0) * self.MIN_SPEED
+            
+            elif a_button == 1:
+                targetspeed = self.MAX_SPEED
+
+            elif b_button == 1:
+                targetspeed = self.MIN_SPEED * 1.0/2
+
+            elif x_button == 1:
+                targetSpeed = self.MAX_SPEED * 1.0/3
+
+            elif y_button == 1:
+                targetspeed = self.MAX_SPEED * 2.0/3
+
+            elif left_bumper == 1:
+                targetspeed = self.MIN_SPEED
+            else:
+                no_gas = True
+
+
+
+
+            if no_gas:
+                rate = self.getSlowDownRate(self.current_speed)
+                if self.current_speed >= 0:
+                    newspeed = max(0,self.current_speed - rate)
+                else:
+                    newspeed = min(0,self.current_speed + rate)
+            else:
+                if targetspeed < self.current_speed:
+                    rate = self.getDeAccRate(self.current_speed)
+                    newspeed = max(targetspeed, self.current_speed - rate)
+                else:
+                    rate = self.getAccRate(self.current_speed)
+                    newspeed = min(targetspeed, self.current_speed + rate)
+
+
+
+        else:
+            newspeed = 0
+        
+        ack = AckermannDrive()
+        ack.steering_angle = newangle
+        ack.speed = newspeed
+
+        self.current_speed = newspeed
+        self.current_steering_angle = newangle
+
+        print "ack", ack
+
+        self.pub.publish(ack)
+
+
+    
 
 
 if __name__ == '__main__':
     try:
-        converter()
+        JoyToAckermann()
+        rospy.spin()
     except rospy.ROSInterruptException:
         pass
