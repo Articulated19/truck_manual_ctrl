@@ -11,7 +11,7 @@ fire up the roscore on the truck and run
 ```
 #!python
 
-rosrun hw_api_ackermann truck.py
+rosrun hw_api_ackermann truck_cmd_node.py
 ```
 
 
