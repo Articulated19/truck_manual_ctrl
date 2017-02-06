@@ -38,14 +38,14 @@ class JoyToAckermann:
         self.mode = 1
         self.prev_select = 0
 
-        self.STEER_RATE_CONSTANT = 0.3
-        self.STEER_COEFFICIENT = 0.016
+        self.STEER_RATE_CONSTANT = 0.3/2/1.5
+        self.STEER_COEFFICIENT = 0.016/2/2
 
-        self.ACC_RATE_CONSTANT = 0.03
-        self.ACC_RATE_COEFFICIENT = 0.084
+        self.ACC_RATE_CONSTANT = 0.03/2
+        self.ACC_RATE_COEFFICIENT = 0.084/2
 
-        self.SLOW_DOWN_RATE_CONSTANT = 0.01
-        self.SLOW_DOWN_COEFFICIENT = 0.07
+        self.SLOW_DOWN_RATE_CONSTANT = 0.01/2
+        self.SLOW_DOWN_COEFFICIENT = 0.07/2
 
         self.pub = rospy.Publisher('truck_cmd', AckermannDrive, queue_size=10)
 
@@ -70,7 +70,7 @@ class JoyToAckermann:
 
     def getDeAccRate(self, cur_speed):
         c = self.ACC_RATE_COEFFICIENT
-        return self.ACC_RATE_CONSTANT + c*cur_speed + c*self.MIN_SPEED
+        return self.ACC_RATE_CONSTANT + c*cur_speed - c*self.MIN_SPEED
 
     def getAccRate(self, cur_speed):
         c = self.ACC_RATE_COEFFICIENT
@@ -87,12 +87,12 @@ class JoyToAckermann:
         if targetangle > self.current_steering_angle:
             #left
             rate = self.leftTurnRate(self.current_steering_angle)
-            return = min(targetangle, self.current_steering_angle + rate)
+            return min(targetangle, self.current_steering_angle + rate)
         
         else:
             #right
             rate = self.rightTurnRate(self.current_steering_angle)
-            return = max(targetangle, self.current_steering_angle - rate)
+            return max(targetangle, self.current_steering_angle - rate)
 
 
     def callback(self,data):
@@ -108,22 +108,22 @@ class JoyToAckermann:
 
         X = accelerate
         O = reverse
-        Δ = like X but stops at a certain (slow) speed
-        □ = like Δ but higher limit
+        triangle = like X but stops at a certain (slow) speed
+        square = like triangle but higher limit
 
         L1 = like O but stops at a certain speed
 
         """
 
-        left_joy      = data.axes[?]         # 1 = left, -1 = right
-        a_button      = data.buttons[?]    
-        b_button      = data.buttons[?] 
-        x_button      = data.buttons[?]
-        y_button      = data.buttons[?]
-        left_bumper   = data.buttons[?]
-        left_trigger  = data.axes[?]         # -1 = pressed, 1 = not pressed
-        right_trigger = data.axes[?]         # -1 = pressed, 1 = not pressed
-        select_but    = data.buttons[?]        #select buton ps3 controller
+        left_joy      = data.axes[0]         # 1 = left, -1 = right
+        a_button      = data.buttons[14]    
+        b_button      = data.buttons[13] 
+        x_button      = data.buttons[15]
+        y_button      = data.buttons[12]
+        left_bumper   = data.buttons[10]
+        left_trigger  = data.axes[12]         # -1 = pressed, 1 = not pressed
+        right_trigger = data.axes[13]         # -1 = pressed, 1 = not pressed
+        select_but    = data.buttons[0]        #select buton ps3 controller
 
         
         newangle = self.getNewAngle(left_joy)
@@ -131,8 +131,9 @@ class JoyToAckermann:
         if select_but == 1:
             if self.prev_select == 0:
                 self.mode *= -1
+                
+        self.prev_select = select_but
                     
-            self.prev_select = select_but
 
 
         no_gas = False
@@ -146,7 +147,7 @@ class JoyToAckermann:
                     
                 else:
                     targetspeed = ((2 - (right_trigger+1))/2.0) * self.MIN_SPEED
-            
+                    print "target ", targetspeed
             elif a_button == 1:
                 targetspeed = self.MAX_SPEED
 
@@ -154,7 +155,7 @@ class JoyToAckermann:
                 targetspeed = self.MIN_SPEED * 1.0/2
 
             elif x_button == 1:
-                targetSpeed = self.MAX_SPEED * 1.0/3
+                targetspeed = self.MAX_SPEED * 1.0/3
 
             elif y_button == 1:
                 targetspeed = self.MAX_SPEED * 2.0/3
@@ -177,10 +178,11 @@ class JoyToAckermann:
                 if targetspeed < self.current_speed:
                     rate = self.getDeAccRate(self.current_speed)
                     newspeed = max(targetspeed, self.current_speed - rate)
+                    print "rate ", rate
                 else:
                     rate = self.getAccRate(self.current_speed)
                     newspeed = min(targetspeed, self.current_speed + rate)
-
+                    
 
 
         else:
@@ -193,7 +195,8 @@ class JoyToAckermann:
         self.current_speed = newspeed
         self.current_steering_angle = newangle
 
-        print "ack", ack
+        print "ack ", ack
+        print "mode ", self.mode
 
         self.pub.publish(ack)
 
