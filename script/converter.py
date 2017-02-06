@@ -38,8 +38,8 @@ class JoyToAckermann:
         self.mode = 1
         self.prev_select = 0
 
-        self.STEER_RATE_CONSTANT = 0.3/2/1.5
-        self.STEER_COEFFICIENT = 0.016/2/2
+        self.STEER_RATE_CONSTANT = 0.3/2
+        self.STEER_COEFFICIENT = 0.016/2
 
         self.ACC_RATE_CONSTANT = 0.03/2
         self.ACC_RATE_COEFFICIENT = 0.084/2
@@ -58,7 +58,7 @@ class JoyToAckermann:
         if left_joy >= 0:
             return left_joy * self.MAX_ANGLE
         else:
-            return left_joy * self.MIN_ANGLE
+            return -left_joy * self.MIN_ANGLE
 
     def leftTurnRate(self, cur_angle):
         c = self.STEER_COEFFICIENT
