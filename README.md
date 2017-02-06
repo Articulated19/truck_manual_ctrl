@@ -6,20 +6,6 @@ A package to translate sensor_msgs/joy to hw_api_ackermann/AckermannDrive
 ### on truck: ###
 clone the hw_api_ackermann repo and build it
 
-run 
-```
-#!python
-
-export ROS_HOSTNAME=TRUCK_IP
-```
-
-and 
-```
-#!python
-
-export ROS_MASTER_URI=http://TRUCK_IP:11311
-```
-
 fire up the roscore on the truck and run 
 
 ```
@@ -50,7 +36,7 @@ run
 ```
 #!python
 
-rosrun joy joy_node _autorepeat:=50
+rosrun joy joy_node _autorepeat_rate:=50 _coalesce_rate:=0.02
 ```
 
 Clone the hw_api_ackermann repo and build it
@@ -67,12 +53,15 @@ rosrun joy_to_ackermann converter.py
 
 enjoy and drive responsibly
 
-hold left and right trigger to drive
+Controls:
+for the ps3 controller:
+
+hold left trigger to drive
 
 steering: left joystick
 
-throttle: A
+throttle: right trigger
 
-reverse: B
+reverse: press select and then use throttle
 
-constant speed: Y
+constant speed: square=slow triangle=fast x=full speed circle=slow reverse l1=full reverse
