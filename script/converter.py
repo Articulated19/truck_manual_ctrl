@@ -55,7 +55,7 @@ class JoyToAckermann:
         self.manualPub = rospy.Publisher('manual_control', Bool, queue_size=10)
         self.deadMansGripPub = rospy.Publisher('dead_mans_grip', Bool, queue_size=10)
 
-        rospy.init_node('joy_converter', anonymous=False)
+        rospy.init_node('converter', anonymous=False)
         rospy.Subscriber("joy", Joy, self.callback)
         self.last_message_time = rospy.get_time()
 
@@ -224,8 +224,7 @@ class JoyToAckermann:
                 go = Bool()
                 go.data = False
                 self.manualPub.publish(manual)
-                self.ackermannPub.publish(ack)
-                self.deadMansPub.publish(go)
+                self.deadMansGripPub.publish(go)
                 self.current_speed = 0
                 self.current_steering_angle = 0
     
