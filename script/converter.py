@@ -3,6 +3,7 @@
 import rospy
 from hw_api_ackermann.msg import AckermannDrive
 from sensor_msgs.msg import Joy
+from std_msgs.msg import Bool
 from math import *
 
 """
@@ -35,8 +36,10 @@ class JoyToAckermann:
         self.MAX_SPEED = 1.4
         self.MIN_SPEED = -0.97
         
+        self.deadMansGrip = False
         self.mode = 1
         self.prev_select = 0
+        self.prev_start = 0
 
         self.STEER_RATE_CONSTANT = 0.3/2
         self.STEER_COEFFICIENT = 0.016/2
@@ -47,12 +50,13 @@ class JoyToAckermann:
         self.SLOW_DOWN_RATE_CONSTANT = 0.01/2
         self.SLOW_DOWN_COEFFICIENT = 0.07/2
 
-        self.pub = rospy.Publisher('truck_cmd', AckermannDrive, queue_size=10)
+        self.ackermannPub = rospy.Publisher('man_ackermann_control', AckermannDrive, queue_size=10)
+        self.manualPub = rospy.Publisher('manual_control', Bool, queue_size=10)
+        self.deadMansGripPub = rospy.Publisher('dead_mans_grip', Bool, queue_size=10)
 
         rospy.init_node('joy_converter', anonymous=False)
         rospy.Subscriber("joy", Joy, self.callback)
-		
-		self.last_message_time = rospy.get_time()
+        self.last_message_time = rospy.get_time()
 
 
     def getTargetAngle(self, left_joy):
@@ -115,7 +119,7 @@ class JoyToAckermann:
         L1 = like O but stops at a certain speed
 
         """
-		self.last_message_time = rospy.get_time()
+        self.last_message_time = rospy.get_time()
 
         left_joy      = data.axes[0]         # 1 = left, -1 = right
         a_button      = data.buttons[14]    
@@ -126,7 +130,7 @@ class JoyToAckermann:
         left_trigger  = data.axes[12]         # -1 = pressed, 1 = not pressed
         right_trigger = data.axes[13]         # -1 = pressed, 1 = not pressed
         select_but    = data.buttons[0]        #select buton ps3 controller
-
+        start_but     = data.buttons[3]
         
         newangle = self.getNewAngle(left_joy)
 
@@ -136,63 +140,72 @@ class JoyToAckermann:
                 
         self.prev_select = select_but
                     
-
+        if start_but == 1:
+            if self.prev_start == 0:
+                self.manual = not self.manual
+        
+        self.prev_start == start_but
 
         no_gas = False
 
-        if left_trigger == -1:
-
-            if right_trigger != 1:
-                
-                if self.mode == 1:
-                    targetspeed = ((2 - (right_trigger+1))/2.0) * self.MAX_SPEED
-                    
-                else:
-                    targetspeed = ((2 - (right_trigger+1))/2.0) * self.MIN_SPEED
-                    print "target ", targetspeed
-            elif a_button == 1:
-                targetspeed = self.MAX_SPEED
-
-            elif b_button == 1:
-                targetspeed = self.MIN_SPEED * 1.0/2
-
-            elif x_button == 1:
-                targetspeed = self.MAX_SPEED * 1.0/3
-
-            elif y_button == 1:
-                targetspeed = self.MAX_SPEED * 2.0/3
-
-            elif left_bumper == 1:
-                targetspeed = self.MIN_SPEED
-            else:
-                no_gas = True
-
-
-
-
-            if no_gas:
-                rate = self.getSlowDownRate(self.current_speed)
-                if self.current_speed >= 0:
-                    newspeed = max(0,self.current_speed - rate)
-                else:
-                    newspeed = min(0,self.current_speed + rate)
-            else:
-                if targetspeed < self.current_speed:
-                    rate = self.getDeAccRate(self.current_speed)
-                    newspeed = max(targetspeed, self.current_speed - rate)
-                    print "rate ", rate
-                else:
-                    rate = self.getAccRate(self.current_speed)
-                    newspeed = min(targetspeed, self.current_speed + rate)
-                    
-
-
-        else:
-            newspeed = 0
         
+
+        if right_trigger != 1:
+            
+            if self.mode == 1:
+                targetspeed = ((2 - (right_trigger+1))/2.0) * self.MAX_SPEED
+                
+            else:
+                targetspeed = ((2 - (right_trigger+1))/2.0) * self.MIN_SPEED
+                print "target ", targetspeed
+        elif a_button == 1:
+            targetspeed = self.MAX_SPEED
+
+        elif b_button == 1:
+            targetspeed = self.MIN_SPEED * 1.0/2
+
+        elif x_button == 1:
+            targetspeed = self.MAX_SPEED * 1.0/3
+
+        elif y_button == 1:
+            targetspeed = self.MAX_SPEED * 2.0/3
+
+        elif left_bumper == 1:
+            targetspeed = self.MIN_SPEED
+        else:
+            no_gas = True
+
+
+
+
+        if no_gas:
+            rate = self.getSlowDownRate(self.current_speed)
+            if self.current_speed >= 0:
+                newspeed = max(0,self.current_speed - rate)
+            else:
+                newspeed = min(0,self.current_speed + rate)
+        else:
+            if targetspeed < self.current_speed:
+                rate = self.getDeAccRate(self.current_speed)
+                newspeed = max(targetspeed, self.current_speed - rate)
+                print "rate ", rate
+            else:
+                rate = self.getAccRate(self.current_speed)
+                newspeed = min(targetspeed, self.current_speed + rate)
+                
+        if left_trigger == -1:
+            self.deadMansGrip = True
+        else:
+            self.deadMansGrip = False
+
         ack = AckermannDrive()
         ack.steering_angle = newangle
         ack.speed = newspeed
+        
+        deadMansMessage = Bool()
+        deadMansMessage.data = self.deadMansGrip
+        manualMessage = Bool()
+        manualMessage.data = self.manual
 
         self.current_speed = newspeed
         self.current_steering_angle = newangle
@@ -200,8 +213,10 @@ class JoyToAckermann:
         print "ack ", ack
         print "mode ", self.mode
 
-        self.pub.publish(ack)
-	
+        self.ackermannPub.publish(ack)
+        self.deadMansGripPub.publish(deadMansMessage)
+        self.manualPub.publish(manualMessage)
+
 	def spin(self):
 		while not rospy.is_shutdown():
 			#if no message received in a while, stop truck
@@ -209,8 +224,7 @@ class JoyToAckermann:
 				ack = AckermannDrive()
 				ack.steering_angle = 0
 				ack.speed = 0
-				self.pub.publish(ack)
-				
+				self.ackermannPub.publish(ack)
 				self.current_speed = 0
 				self.current_steering_angle = 0
 				
@@ -221,4 +235,4 @@ class JoyToAckermann:
 
 if __name__ == '__main__':
     j = JoyToAckermann()
-	j.spin()
+    j.spin()
