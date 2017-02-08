@@ -51,7 +51,8 @@ class JoyToAckermann:
 
         rospy.init_node('joy_converter', anonymous=False)
         rospy.Subscriber("joy", Joy, self.callback)
-
+		
+		self.last_message_time = rospy.get_time()
 
 
     def getTargetAngle(self, left_joy):
@@ -114,6 +115,7 @@ class JoyToAckermann:
         L1 = like O but stops at a certain speed
 
         """
+		self.last_message_time = rospy.get_time()
 
         left_joy      = data.axes[0]         # 1 = left, -1 = right
         a_button      = data.buttons[14]    
@@ -199,14 +201,24 @@ class JoyToAckermann:
         print "mode ", self.mode
 
         self.pub.publish(ack)
-
+	
+	def spin(self):
+		while not rospy.is_shutdown():
+			#if no message received in a while, stop truck
+			if rospy.get_time() - self.last_message_time >= 0.10:
+				ack = AckermannDrive()
+				ack.steering_angle = 0
+				ack.speed = 0
+				self.pub.publish(ack)
+				
+				self.current_speed = 0
+				self.current_steering_angle = 0
+				
+			rospy.sleep(0.05)
 
     
 
 
 if __name__ == '__main__':
-    try:
-        JoyToAckermann()
-        rospy.spin()
-    except rospy.ROSInterruptException:
-        pass
+    j = JoyToAckermann()
+	j.spin()
