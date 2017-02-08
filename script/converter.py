@@ -40,6 +40,7 @@ class JoyToAckermann:
         self.mode = 1
         self.prev_select = 0
         self.prev_start = 0
+        self.manual = False
 
         self.STEER_RATE_CONSTANT = 0.3/2
         self.STEER_COEFFICIENT = 0.016/2
@@ -144,7 +145,7 @@ class JoyToAckermann:
             if self.prev_start == 0:
                 self.manual = not self.manual
         
-        self.prev_start == start_but
+        self.prev_start = start_but
 
         no_gas = False
 
@@ -216,16 +217,19 @@ class JoyToAckermann:
 
     def spin(self):
         while not rospy.is_shutdown():
-			#if no message received in a while, stop truck
-			if rospy.get_time() - self.last_message_time >= 0.10:
-				ack = AckermannDrive()
-				ack.steering_angle = 0
-				ack.speed = 0
-				self.ackermannPub.publish(ack)
-				self.current_speed = 0
-				self.current_steering_angle = 0
-				
-			rospy.sleep(0.05)
+            #if no message received in a while, stop truck
+            if rospy.get_time() - self.last_message_time >= 0.10:
+                manual = Bool()
+                manual.data = True
+                go = Bool()
+                go.data = False
+                self.manualPub.publish(manual)
+                self.ackermannPub.publish(ack)
+                self.deadMansPub.publish(go)
+                self.current_speed = 0
+                self.current_steering_angle = 0
+    
+            rospy.sleep(0.05)
 
 if __name__ == '__main__':
     j = JoyToAckermann()
