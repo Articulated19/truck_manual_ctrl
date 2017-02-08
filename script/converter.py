@@ -149,9 +149,7 @@ class JoyToAckermann:
         no_gas = False
 
         
-
         if right_trigger != 1:
-            
             if self.mode == 1:
                 targetspeed = ((2 - (right_trigger+1))/2.0) * self.MAX_SPEED
                 
@@ -174,8 +172,6 @@ class JoyToAckermann:
             targetspeed = self.MIN_SPEED
         else:
             no_gas = True
-
-
 
 
         if no_gas:
@@ -204,6 +200,7 @@ class JoyToAckermann:
         
         deadMansMessage = Bool()
         deadMansMessage.data = self.deadMansGrip
+
         manualMessage = Bool()
         manualMessage.data = self.manual
 
@@ -217,8 +214,8 @@ class JoyToAckermann:
         self.deadMansGripPub.publish(deadMansMessage)
         self.manualPub.publish(manualMessage)
 
-	def spin(self):
-		while not rospy.is_shutdown():
+    def spin(self):
+        while not rospy.is_shutdown():
 			#if no message received in a while, stop truck
 			if rospy.get_time() - self.last_message_time >= 0.10:
 				ack = AckermannDrive()
@@ -229,9 +226,6 @@ class JoyToAckermann:
 				self.current_steering_angle = 0
 				
 			rospy.sleep(0.05)
-
-    
-
 
 if __name__ == '__main__':
     j = JoyToAckermann()
