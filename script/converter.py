@@ -42,7 +42,8 @@ class JoyToAckermann:
         self.prev_start = 0
         self.manual = False
 
-        self.STEER_RATE_CONSTANT = 0.3/2
+        """
+        self.STEER_RATE_CONSTANT = 0.3#0.3/2
         self.STEER_COEFFICIENT = 0.016/2
 
         self.ACC_RATE_CONSTANT = 0.03/2
@@ -50,6 +51,18 @@ class JoyToAckermann:
 
         self.SLOW_DOWN_RATE_CONSTANT = 0.01/2
         self.SLOW_DOWN_COEFFICIENT = 0.07/2
+        """
+        
+        self.STEER_RATE_CONSTANT = 0.45#0.3/2
+        self.STEER_COEFFICIENT = 0.032
+
+        self.ACC_RATE_CONSTANT = 0.03
+        self.ACC_RATE_COEFFICIENT = 0.084
+
+        self.SLOW_DOWN_RATE_CONSTANT = 0.01
+        self.SLOW_DOWN_COEFFICIENT = 0.07
+
+
 
         self.ackermannPub = rospy.Publisher('man_ackermann_control', AckermannDrive, queue_size=10)
         self.manualPub = rospy.Publisher('manual_control', Bool, queue_size=10)
@@ -102,7 +115,8 @@ class JoyToAckermann:
 
 
     def callback(self,data):
-
+        
+        
         """
         Ps3 controls:
 
@@ -132,6 +146,8 @@ class JoyToAckermann:
         right_trigger = data.axes[13]         # -1 = pressed, 1 = not pressed
         select_but    = data.buttons[0]        #select buton ps3 controller
         start_but     = data.buttons[3]
+
+        print "left_joy", left_joy
         
         newangle = self.getNewAngle(left_joy)
 
@@ -156,7 +172,7 @@ class JoyToAckermann:
                 
             else:
                 targetspeed = ((2 - (right_trigger+1))/2.0) * self.MIN_SPEED
-                print "target ", targetspeed
+            print "target ", targetspeed
         elif a_button == 1:
             targetspeed = self.MAX_SPEED
 
@@ -190,7 +206,7 @@ class JoyToAckermann:
                 rate = self.getAccRate(self.current_speed)
                 newspeed = min(targetspeed, self.current_speed + rate)
                 
-        if left_trigger == -1:
+        if left_trigger < 0:
             self.deadMansGrip = True
         else:
             self.deadMansGrip = False
@@ -215,21 +231,7 @@ class JoyToAckermann:
         self.deadMansGripPub.publish(deadMansMessage)
         self.manualPub.publish(manualMessage)
 
-    def spin(self):
-        while not rospy.is_shutdown():
-            #if no message received in a while, stop truck
-            if rospy.get_time() - self.last_message_time >= 0.10:
-                manual = Bool()
-                manual.data = True
-                go = Bool()
-                go.data = False
-                self.manualPub.publish(manual)
-                self.deadMansGripPub.publish(go)
-                self.current_speed = 0
-                self.current_steering_angle = 0
-    
-            rospy.sleep(0.05)
 
 if __name__ == '__main__':
     j = JoyToAckermann()
-    j.spin()
+    rospy.spin()
