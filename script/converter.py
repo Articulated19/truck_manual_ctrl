@@ -43,7 +43,8 @@ class JoyToAckermann:
         self.manual = False
 
         #rate is a cmd line argument later
-        self.rate = 50.0
+        self.rate = rospy.get_param('joy_rate', 50.0)
+        self.controller = rospy.get_param('joystick_type','ps3')
 
         self.STEER_RATE_CONSTANT = 22.5 #degrees per second
         self.STEER_RATE_VARIABLE = 45 #in addition to constant rate. this is max rate
