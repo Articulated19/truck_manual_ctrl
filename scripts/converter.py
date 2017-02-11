@@ -10,7 +10,7 @@ SLOW_DOWN_RATE_CONSTANT = 0.5 #m/s^2
 SLOW_DOWN_RATE_VARIABLE = 0.5 #in addition to constant rate. this is max rate. for driving forward, backward is using forwards rate
 
 class Converter:
-    self.__init__(joy_rate, min_angle, max_angle, min_speed, max_speed):
+    def __init__(self, joy_rate, min_angle, max_angle, min_speed, max_speed):
         
         self.reverse_mode = False
         self.prev_rev_toggle_but = 0
@@ -40,14 +40,14 @@ class Converter:
         self.MAX_SPEED = max_speed
 
 
-    def getDriveCommands(buttons):
+    def getDriveCommands(self, buttons):
 
         handleReverseMode(buttons[CONTROLS_MAP[TOGGLE_REVERSE]])
         handleAutoMode(buttons[CONTROLS_MAP[TOGGLE_AUTOMATIC]])
 
         deadMansSwitch = self.hasDeadMansSwitch(buttons[CONTROLS_MAP[DEAD_MANS_SWITCH]])
 
-        if self.manual && deadMansSwitch:
+        if self.manual and deadMansSwitch:
             newangle = self.getNewAngle(buttons[CONTROLS_MAP[STEER]])
             newspeed = self.getNewSpeed(buttons)
         else:
@@ -62,7 +62,7 @@ class Converter:
 
 
 
-    def handleReverseMode(toggle_rev_but):
+    def handleReverseMode(self, toggle_rev_but):
         if toggle_rev_but == 1:
             if self.prev_rev_toggle_but == 0:
                 self.reverse_mode = not self.reverse_mode
@@ -70,14 +70,14 @@ class Converter:
         self.prev_rev_toggle_but = toggle_rev_but
 
 
-    def handleAutoMode(toggle_auto_but):
+    def handleAutoMode(self, toggle_auto_but):
         if toggle_auto_but == 1:
             if self.prev_auto_toggle_but == 0:
                 self.auto_mode = not self.auto_mode
 
         self.prev_auto_toggle_but = toggle_auto_but
 
-    def hasDeadMansSwitch(dms_but):
+    def hasDeadMansSwitch(self, dms_but):
         return dms_but < 0
 
 
@@ -109,7 +109,7 @@ class Converter:
         return self.steer_c + self.steer_k * cur_angle + self.steer_m_r
 
 
-    def getNewSpeed(buttons):
+    def getNewSpeed(self, buttons):
         
         targetSpeed = getTargetSpeed(buttons)
 
@@ -129,7 +129,7 @@ class Converter:
 
         return newspeed
         
-    def getTargetSpeed(buttons):
+    def getTargetSpeed(self, buttons):
 
         ds = buttons[CONTROLS_MAP[DYNAMIC_SPEED]]
         if ds != 1:

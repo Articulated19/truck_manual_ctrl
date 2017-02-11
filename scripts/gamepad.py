@@ -57,7 +57,7 @@ class GamepadNode:
         ad.data = autoDrive
         self.autoDrivePublisher.publish(ad)
 
-        if deadMansSwitch && (not autoDrive):
+        if deadMansSwitch and (not autoDrive):
             ack = AckermannDrive()
             ack.steering_angle = newAngle
             ack.speed = newApeed
