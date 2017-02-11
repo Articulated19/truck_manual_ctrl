@@ -5,8 +5,8 @@ from truck_hw_api.scripts import interpolate
 from sensor_msgs.msg import Joy
 from std_msgs.msg import Bool
 from math import *
-import controls
-import converter
+from converter import *
+from controls import *
 
 
 class GamepadNode:
@@ -24,20 +24,20 @@ class GamepadNode:
         max_angle = rospy.get_param('max_angle')
         min_speed = rospy.get_param('min_speed')
         max_speed = rospy.get_param('max_speed')
-        joy_rate = rospy.get_param('joy_rate', 50)
+        gamepad_rate = rospy.get_param('gamepad_rate', 50)
 
-        self.converter = Converter(joy_rate, min_angle, max_angle, min_speed, max_speed)
+        self.converter = Converter(gamepad_rate, min_angle, max_angle, min_speed, max_speed)
 
 
-        self.joystick = rospy.get_param('joystick_type', DEFAULT_JOYSTICK).lower()
+        self.gamepad = rospy.get_param('gamepad_type', DEFAULT_GAMEPAD).lower()
 
-        if not self.joystick in joysticks.keys():
-            self.joystick = DEFAULT_JOYSTICK
+        if not self.gamepad in gamepads.keys():
+            self.gamepad = DEFAULT_GAMEPAD
 
                 
-        self.ackermannPub = rospy.Publisher('man_drive', AckermannDrive, queue_size=10)
-        self.manualPub = rospy.Publisher('auto_ctrl', Bool, queue_size=10)
-        self.deadMansGripPub = rospy.Publisher('dead_mans_grip', Bool, queue_size=10)
+        self.manualDrivePublisher = rospy.Publisher('man_drive', AckermannDrive, queue_size=10)
+        self.autoDrivePublisher = rospy.Publisher('auto_ctrl', Bool, queue_size=10)
+        self.dmsPublisher = rospy.Publisher('dead_mans_switch', Bool, queue_size=10)
 
         rospy.init_node('gamepad', anonymous=False)
         rospy.Subscriber('joy', Joy, self.callback)
@@ -47,17 +47,17 @@ class GamepadNode:
 
         buttons = getButtons(data, self.controller)
 
-        (newAngle, newSpeed, deadMansGrip, manual) = convert.getCommands(buttons)
+        (newAngle, newSpeed, deadMansSwitch, autoDrive) = converter.getDriveCommands(buttons)
 
-        deadMansMessage = Bool()
-        deadMansMessage.data = deadMansGrip
-        self.deadMansGripPub.publish(deadMansMessage)
+        dms = Bool()
+        dms.data = deadMansSwitch
+        self.dms_publisher.publish(dms)
         
-        manualMessage = Bool()
-        manualMessage.data = manual
-        self.manualPub.publish(manualMessage)
+        ad = Bool()
+        ad.data = autoDrive
+        self.autoDrivePublisher.publish(ad)
 
-        if deadMansGrip && manual:
+        if deadMansSwitch && (not autoDrive):
             ack = AckermannDrive()
             ack.steering_angle = newAngle
             ack.speed = newApeed

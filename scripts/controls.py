@@ -1,7 +1,7 @@
 
 PS3 = "ps3"
 
-DEFAULT_JOYSTICK = PS3
+DEFAULT_GAMEPAD = PS3
 
 LEFT_JOY_X = "left_joy_x"
 A_BUTTON = "a_button"
@@ -17,7 +17,7 @@ START_BUTTON = "start_button"
 AXES = 'a'
 BUTTONS = 'b'
 
-CONTROL = {
+GAMEPAD_MAP = {
     LEFT_JOY_X : [(AXES, 0)],
     A_BUTTON : [(BUTTONS, 14)],   
     B_BUTTON : [(BUTTONS, 13)], 
@@ -30,14 +30,14 @@ CONTROL = {
     START_BUTTON : [(BUTTONS, 3)]
 }
 
-joysticks = {
+gamepads = {
     PS3: 0
 }
 
 
 STEER = "steer"
 DYNAMIC_SPEED = "dynamic"
-DEAD_MANS_GRIP = "dmg"
+DEAD_MANS_SWITCH = "dmg"
 TOGGLE_AUTOMATIC = "auto"
 TOGGLE_REVERSE = "rev"
 FULL_SPEED_FORWARD = "fullAcc"
@@ -47,10 +47,10 @@ FULL_SPEED_BACKWARD = "fullRev"
 SLOW_SPEED_BACKWARD = "slowrev"
 
 
-CONTROL_MAP = {
+CONTROLS_MAP = {
     STEER: LEFT_JOY_X,
     DYNAMIC_SPEED: RIGHT_TRIGGER,
-    DEAD_MANS_GRIP: LEFT_TRIGGER,
+    DEAD_MANS_SWITCH: LEFT_TRIGGER,
     TOGGLE_AUTOMATIC: START_BUTTON,
     TOGGLE_REVERSE: SELECT_BUTTON,
     FULL_SPEED_FORWARD: A_BUTTON,
@@ -63,12 +63,12 @@ CONTROL_MAP = {
 def getButtons(data, controller):
     i = joysticks[controller]
     d = {}
-    for key, value in CONTROLS.iteritems():
+    for key, value in GAMEPAD_MAP.iteritems():
         (t, b) = value[i]
         if t == AXES:
             d[key] = data.axes[b]
         elif t == BUTTONS:
             d[key] = data.buttons[b]
         else:
-            print "CONTROLS poorly formatted"
+            print "GAMEPAD_MAP poorly formatted"
     return d

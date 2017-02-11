@@ -1,5 +1,4 @@
-from converter import *
-
+from controls import *
 
 STEER_RATE_CONSTANT = 22.5 #degrees per second
 STEER_RATE_VARIABLE = 45 #in addition to constant rate. this is max rate
@@ -13,14 +12,13 @@ SLOW_DOWN_RATE_VARIABLE = 0.5 #in addition to constant rate. this is max rate. f
 class Converter:
     self.__init__(joy_rate, min_angle, max_angle, min_speed, max_speed):
         
-        self.mode = 1
-        self.prev_select = 0
-        self.prev_start = 0
-        self.manual = False
+        self.reverse_mode = False
+        self.prev_rev_toggle_but = 0
+        self.auto_mode = False
+        self.prev_auto_toggle_but = 0
 
         self.current_steering_angle = 0 
         self.current_speed = 0 
-
 
 
         self.steer_k = (STEER_RATE_VARIABLE / float(joy_rate)) / (max_angle - min_angle)
@@ -42,15 +40,15 @@ class Converter:
         self.MAX_SPEED = max_speed
 
 
-    def getCommands(buttons):
+    def getDriveCommands(buttons):
 
-        handleMode(buttons[CONTROL_MAP[TOGGLE_REVERSE]])
-        handleManual(buttons[CONTROL_MAP[TOGGLE_AUTOMATIC]])
+        handleReverseMode(buttons[CONTROLS_MAP[TOGGLE_REVERSE]])
+        handleAutoMode(buttons[CONTROLS_MAP[TOGGLE_AUTOMATIC]])
 
-        deadMansGrip = self.hasDeadMansGrip(buttons[CONTROL_MAP[DEAD_MANS_GRIP]])
+        deadMansSwitch = self.hasDeadMansSwitch(buttons[CONTROLS_MAP[DEAD_MANS_SWITCH]])
 
-        if self.manual && deadMansGrip:
-            newangle = self.getNewAngle(buttons[CONTROL_MAP[STEER]])
+        if self.manual && deadMansSwitch:
+            newangle = self.getNewAngle(buttons[CONTROLS_MAP[STEER]])
             newspeed = self.getNewSpeed(buttons)
         else:
             newangle = 0
@@ -60,91 +58,27 @@ class Converter:
         self.current_steering_angle = newangle
 
 
-        return (newspeed, newangle, deadMansGrip, self.manual)
+        return (newspeed, newangle, deadMansSwitch, self.manual)
 
 
 
-    def handleMode(modeBut):
-        if modeBut == 1:
-            if self.prev_select == 0:
-                self.mode *= -1
+    def handleReverseMode(toggle_rev_but):
+        if toggle_rev_but == 1:
+            if self.prev_rev_toggle_but == 0:
+                self.reverse_mode = not self.reverse_mode
                 
-        self.prev_select = modeBut
+        self.prev_rev_toggle_but = toggle_rev_but
 
 
-    def handleManual(manBut):
-        if manBut == 1:
-            if self.prev_start == 0:
-                self.manual = not self.manual
+    def handleAutoMode(toggle_auto_but):
+        if toggle_auto_but == 1:
+            if self.prev_auto_toggle_but == 0:
+                self.auto_mode = not self.auto_mode
 
+        self.prev_auto_toggle_but = toggle_auto_but
 
-        self.prev_start = manBut
-
-    def hasDeadMansGrip(dmgBut):
-        return dmgBut < 0
-
-    def getTargetSpeed(buttons):
-
-        d_t = buttons[CONTROL_MAP[DYNAMIC_SPEED]]
-        if d_t != 1:
-            if mode == 1:
-                return ((2 - (d_t + 1)) / 2.0) * self.MAX_SPEED
-                
-            else:
-                return ((2 - (d_t + 1)) / 2.0) * self.MIN_SPEED
-            
-        elif buttons[CONTROL_MAP[FULL_SPEED_FORWARD]] == 1:
-            return self.MAX_SPEED
-
-        elif buttons[CONTROL_MAP[SLOW_SPEED_BACKWARD]] == 1:
-            return self.MIN_SPEED * 1.0/2
-
-        elif buttons[CONTROL_MAP[SLOW_SPEED_FORWARD]] == 1:
-            return self.MAX_SPEED * 1.0/3
-
-        elif buttons[CONTROL_MAP[FAST_SPEED_FORWARD]] == 1:
-            return self.MAX_SPEED * 2.0/3
-
-        elif buttons[CONTROL_MAP[FULL_SPEED_BACKWARD]] == 1:
-            return self.MIN_SPEED
-        else:
-            return 0 #no button pressed
-
-
-    def getNewSpeed(buttons):
-        
-        targetSpeed = getTargetSpeed(buttons)
-
-        if targetSpeed == 0:
-            rate = self.getSlowDownRate(self.current_speed)
-            if self.current_speed >= 0:
-                newspeed = max(0,self.current_speed - rate)
-            else:
-                newspeed = min(0,self.current_speed + rate)
-        else:
-            if targetspeed < current_speed:
-                rate = self.getDeAccRate(self.current_speed)
-                newspeed = max(targetspeed, self.current_speed - rate)
-            else:
-                rate = self.getAccRate(self.current_speed)
-                newspeed = min(targetspeed, self.current_speed + rate)
-
-        return newspeed
-        
-
-
-    
-
-
-
-    def getDeAccRate(self, cur_speed):
-        return self.acc_c + self.acc_k * cur_speed + self.acc_m_b
-
-    def getAccRate(self, cur_speed):
-        return self.acc_c - self.acc_k * cur_speed + self.acc_m_f
-
-    def getSlowDownRate(self, cur_speed):
-        return self.slow_k * abs(cur_speed)
+    def hasDeadMansSwitch(dms_but):
+        return dms_but < 0
 
 
 
@@ -173,3 +107,61 @@ class Converter:
 
     def rightTurnRate(self, cur_angle):
         return self.steer_c + self.steer_k * cur_angle + self.steer_m_r
+
+
+    def getNewSpeed(buttons):
+        
+        targetSpeed = getTargetSpeed(buttons)
+
+        if targetSpeed == 0:
+            rate = self.getSlowDownRate(self.current_speed)
+            if self.current_speed >= 0:
+                newspeed = max(0,self.current_speed - rate)
+            else:
+                newspeed = min(0,self.current_speed + rate)
+        else:
+            if targetspeed < current_speed:
+                rate = self.getDeAccRate(self.current_speed)
+                newspeed = max(targetspeed, self.current_speed - rate)
+            else:
+                rate = self.getAccRate(self.current_speed)
+                newspeed = min(targetspeed, self.current_speed + rate)
+
+        return newspeed
+        
+    def getTargetSpeed(buttons):
+
+        ds = buttons[CONTROLS_MAP[DYNAMIC_SPEED]]
+        if ds != 1:
+            if mode == 1:
+                return ((2 - (ds + 1)) / 2.0) * self.MAX_SPEED
+                
+            else:
+                return ((2 - (ds + 1)) / 2.0) * self.MIN_SPEED
+            
+        elif buttons[CONTROLS_MAP[FULL_SPEED_FORWARD]] == 1:
+            return self.MAX_SPEED
+
+        elif buttons[CONTROLS_MAP[SLOW_SPEED_BACKWARD]] == 1:
+            return self.MIN_SPEED * 1.0/2
+
+        elif buttons[CONTROLS_MAP[SLOW_SPEED_FORWARD]] == 1:
+            return self.MAX_SPEED * 1.0/3
+
+        elif buttons[CONTROLS_MAP[FAST_SPEED_FORWARD]] == 1:
+            return self.MAX_SPEED * 2.0/3
+
+        elif buttons[CONTROLS_MAP[FULL_SPEED_BACKWARD]] == 1:
+            return self.MIN_SPEED
+        else:
+            return 0 #no button pressed
+        
+
+    def getDeAccRate(self, cur_speed):
+        return self.acc_c + self.acc_k * cur_speed + self.acc_m_b
+
+    def getAccRate(self, cur_speed):
+        return self.acc_c - self.acc_k * cur_speed + self.acc_m_f
+
+    def getSlowDownRate(self, cur_speed):
+        return self.slow_k * abs(cur_speed)
