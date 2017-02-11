@@ -42,27 +42,32 @@ class JoyToAckermann:
         self.prev_start = 0
         self.manual = False
 
-        """
-        self.STEER_RATE_CONSTANT = 0.3#0.3/2
-        self.STEER_COEFFICIENT = 0.016/2
+        #rate is a cmd line argument later
+        self.rate = 50.0
 
-        self.ACC_RATE_CONSTANT = 0.03/2
-        self.ACC_RATE_COEFFICIENT = 0.084/2
-
-        self.SLOW_DOWN_RATE_CONSTANT = 0.01/2
-        self.SLOW_DOWN_COEFFICIENT = 0.07/2
-        """
+        self.STEER_RATE_CONSTANT = 22.5 #degrees per second
+        self.STEER_RATE_VARIABLE = 45 #in addition to constant rate. this is max rate
         
-        self.STEER_RATE_CONSTANT = 0.45#0.3/2
-        self.STEER_COEFFICIENT = 0.032
+        self.steer_k = (self.STEER_RATE_VARIABLE / float(self.rate)) / (self.MAX_ANGLE - self.MIN_ANGLE)
+        self.steer_m_r = -self.MIN_ANGLE * self.steer_k
+        self.steer_m_l = self.MAX_ANGLE * self.steer_k
+        self.steer_c = self.STEER_RATE_CONSTANT / float(self.rate)
 
-        self.ACC_RATE_CONSTANT = 0.03
-        self.ACC_RATE_COEFFICIENT = 0.084
+        self.ACC_RATE_CONSTANT = 1.5 #m/s^2 
+        self.ACC_RATE_VARIABLE = 1.5 #in addition to constant rate. this is max rate
 
-        self.SLOW_DOWN_RATE_CONSTANT = 0.01
-        self.SLOW_DOWN_COEFFICIENT = 0.07
+        self.acc_k = (self.ACC_RATE_CONSTANT / float(self.rate)) / (self.MAX_SPEED - self.MIN_SPEED)
+        self.acc_m_b = -self.MIN_SPEED * self.acc_k
+        self.acc_m_f = self.MAX_SPEED * self.acc_k
+        self.acc_c = self.ACC_RATE_CONSTANT / float(self.rate) 
 
+        self.SLOW_DOWN_RATE_CONSTANT = 0.5 #m/s^2
+        self.SLOW_DOWN_RATE_VARIABLE = 0.5 #in addition to constant rate. this is max rate. for driving forward, backward is using forwards rate
 
+        self.slow_k = (self.SLOW_DOWN_RATE_VARIABLE / float(self.rate)) / self.MAX_SPEED
+        self.slow_c = self.SLOW_DOWN_RATE_CONSTANT / float(self.rate)
+
+        
 
         self.ackermannPub = rospy.Publisher('man_ackermann_control', AckermannDrive, queue_size=10)
         self.manualPub = rospy.Publisher('manual_control', Bool, queue_size=10)
@@ -71,7 +76,7 @@ class JoyToAckermann:
         rospy.init_node('converter', anonymous=False)
         rospy.Subscriber("joy", Joy, self.callback)
         self.last_message_time = rospy.get_time()
-
+        
 
     def getTargetAngle(self, left_joy):
         if left_joy >= 0:
@@ -80,23 +85,20 @@ class JoyToAckermann:
             return -left_joy * self.MIN_ANGLE
 
     def leftTurnRate(self, cur_angle):
-        c = self.STEER_COEFFICIENT
-        return self.STEER_RATE_CONSTANT + (-c)*cur_angle + c*self.MAX_ANGLE
+        return self.steer_c - self.steer_k * cur_angle + self.steer_m_l
     
     def rightTurnRate(self, cur_angle):
-        c = self.STEER_COEFFICIENT
-        return self.STEER_RATE_CONSTANT + c*cur_angle - c*self.MIN_ANGLE
+        return self.steer_c + self.steer_k * cur_angle + self.steer_m_r
 
     def getDeAccRate(self, cur_speed):
-        c = self.ACC_RATE_COEFFICIENT
-        return self.ACC_RATE_CONSTANT + c*cur_speed - c*self.MIN_SPEED
+        return self.acc_c + self.acc_k * cur_speed + self.acc_m_b
 
     def getAccRate(self, cur_speed):
-        c = self.ACC_RATE_COEFFICIENT
-        return self.ACC_RATE_CONSTANT + (-c)*cur_speed + c*self.MAX_SPEED
+        return self.acc_c - self.acc_k * cur_speed + self.acc_m_f
 
     def getSlowDownRate(self, cur_speed):
-        return self.SLOW_DOWN_RATE_CONSTANT + self.SLOW_DOWN_COEFFICIENT * abs(cur_speed)
+        return self.slow_k * abs(cur_speed)
+ 
 
 
     def getNewAngle(self, left_joy):
@@ -134,7 +136,7 @@ class JoyToAckermann:
         L1 = like O but stops at a certain speed
 
         """
-        self.last_message_time = rospy.get_time()
+        #self.last_message_time = rospy.get_time()
 
         left_joy      = data.axes[0]         # 1 = left, -1 = right
         a_button      = data.buttons[14]    
@@ -231,7 +233,7 @@ class JoyToAckermann:
         self.deadMansGripPub.publish(deadMansMessage)
         self.manualPub.publish(manualMessage)
 
-
 if __name__ == '__main__':
     j = JoyToAckermann()
     rospy.spin()
+
