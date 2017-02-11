@@ -1,8 +1,6 @@
 from converter import *
 
 
-
-
 STEER_RATE_CONSTANT = 22.5 #degrees per second
 STEER_RATE_VARIABLE = 45 #in addition to constant rate. this is max rate
 
@@ -57,7 +55,7 @@ class Converter:
         else:
             newangle = 0
             newspeed = 0
-            
+
         self.current_speed = newspeed
         self.current_steering_angle = newangle
 

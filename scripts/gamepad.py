@@ -1,22 +1,23 @@
 #!/usr/bin/env python
 import rospy
-from hw_api_ackermann.msg import AckermannDrive
-from hw_api_ackermann.scripts import dictionaries
+from truck_hw_api.msg import AckermannDrive
+from truck_hw_api.scripts import interpolate
 from sensor_msgs.msg import Joy
 from std_msgs.msg import Bool
 from math import *
 import controls
+import converter
 
 
-class JoystickNode:
+class GamepadNode:
     def __init__(self):
         
         if (not rospy.has_param('min_angle')) or \
                (not rospy.has_param('max_angle')) or \
                (not rospy.has_param('min_speed')) or \
                (not rospy.has_param('max_speed')):
-            dictionaries.generateDictionaries()
-            dictionaries.setRosParams()
+            interpolate.generateDictionaries()
+            interpolate.setRosParams()
         
 
         min_angle = rospy.get_param('min_angle')
@@ -34,12 +35,12 @@ class JoystickNode:
             self.joystick = DEFAULT_JOYSTICK
 
                 
-        self.ackermannPub = rospy.Publisher('man_ackermann_control', AckermannDrive, queue_size=10)
-        self.manualPub = rospy.Publisher('manual_control', Bool, queue_size=10)
+        self.ackermannPub = rospy.Publisher('man_drive', AckermannDrive, queue_size=10)
+        self.manualPub = rospy.Publisher('auto_ctrl', Bool, queue_size=10)
         self.deadMansGripPub = rospy.Publisher('dead_mans_grip', Bool, queue_size=10)
 
-        rospy.init_node('converter', anonymous=False)
-        rospy.Subscriber("joy", Joy, self.callback)
+        rospy.init_node('gamepad', anonymous=False)
+        rospy.Subscriber('joy', Joy, self.callback)
 
 
     def callback(self,data):
@@ -66,6 +67,6 @@ class JoystickNode:
         
 
 if __name__ == '__main__':
-    j = JoystickNode()
+    j = GamepadNode()
     rospy.spin()
 
