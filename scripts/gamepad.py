@@ -36,7 +36,7 @@ class GamepadNode:
 
                 
         self.manualDrivePublisher = rospy.Publisher('man_drive', AckermannDrive, queue_size=10)
-        self.autoDrivePublisher = rospy.Publisher('auto_ctrl', Bool, queue_size=10)
+        self.autoCtrlPublisher = rospy.Publisher('auto_ctrl', Bool, queue_size=10)
         self.dmsPublisher = rospy.Publisher('dead_mans_switch', Bool, queue_size=10)
 
         rospy.init_node('gamepad', anonymous=False)
@@ -47,26 +47,23 @@ class GamepadNode:
 
         buttons = getButtons(data, self.controller)
 
-        (newAngle, newSpeed, deadMansSwitch, autoDrive) = converter.getDriveCommands(buttons)
+        (newAngle, newSpeed, deadMansSwitch, autoCtrl) = self.converter.getDriveCommands(buttons)
 
         dms = Bool()
         dms.data = deadMansSwitch
-        self.dms_publisher.publish(dms)
+        self.dmsPublisher.publish(dms)
         
-        ad = Bool()
-        ad.data = autoDrive
-        self.autoDrivePublisher.publish(ad)
+        ac = Bool()
+        ac.data = autoCtrl
+        self.autoCtrlPublisher.publish(ac)
 
-        if deadMansSwitch and (not autoDrive):
+        if deadMansSwitch and (not autoCtrl):
             ack = AckermannDrive()
             ack.steering_angle = newAngle
-            ack.speed = newApeed
+            ack.speed = newSpeed
             self.ackermannPub.publish(ack)
 
-
-        
 
 if __name__ == '__main__':
     j = GamepadNode()
     rospy.spin()
-

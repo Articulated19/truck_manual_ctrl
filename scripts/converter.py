@@ -47,7 +47,7 @@ class Converter:
 
         deadMansSwitch = self.hasDeadMansSwitch(buttons[CONTROLS_MAP[DEAD_MANS_SWITCH]])
 
-        if self.manual and deadMansSwitch:
+        if self.auto_mode and deadMansSwitch:
             newangle = self.getNewAngle(buttons[CONTROLS_MAP[STEER]])
             newspeed = self.getNewSpeed(buttons)
         else:
@@ -58,7 +58,7 @@ class Converter:
         self.current_steering_angle = newangle
 
 
-        return (newspeed, newangle, deadMansSwitch, self.manual)
+        return (newspeed, newangle, deadMansSwitch, self.auto_mode)
 
 
 
@@ -111,7 +111,7 @@ class Converter:
 
     def getNewSpeed(self, buttons):
         
-        targetSpeed = getTargetSpeed(buttons)
+        targetSpeed = self.getTargetSpeed(buttons)
 
         if targetSpeed == 0:
             rate = self.getSlowDownRate(self.current_speed)
