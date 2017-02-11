@@ -1,5 +1,49 @@
 from controls import *
 
+"""
+Steer rate is how fast the wheels turn
+Acc rate is how fast the velocity changes when accelerating or reversing (is always positive)
+Slow down rate is how fast the velocity changes when neither accelerating or reversing (is always positive)
+
+Each rate has a constant part and a variable part.
+The variable part is increased when the current speed/angle is far from the target speed/angle
+
+The variable part varies from 0 to the constants below.
+The rates below are in degrees/s or m/s^2
+
+E.g., When the current angle is all the way to the left, and you start to steer right,
+the total steer rate will be (STEER_RATE_CONSTANT + STEER_RATE_VARIABLE)
+
+When the current angle is all the way to the right and you steer right,
+the total steer rate will only be STEER_RATE_CONSTANT
+
+When in between the steer rate will be approx. (STEER_RATE_CONSTANT + STEER_RATE_VARIABLE/2)
+
+The same logic applies to speed
+
+---
+
+The variable rate is a linear equation y = kx + m, different for each rate
+
+Example: acceleration forward rate
+
+When at MAX_SPEED, the variable rate is 0
+When ar MIN_SPEED, the variable rate is ACC_RATE_VARIABLE
+
+we have: 0 = k*MAX_SPEED + m
+         ACC_RATE_VARIABLE = k*MIN_SPEED + m
+
+=> solve and get equation
+
+
+----
+
+In all cases a target speed/angle is calculated, and a rate.
+For the new angle/speed we will try to move toward the target, but we are restricted by the rate.
+This creates more smooth steering/accelerating
+
+"""
+
 STEER_RATE_CONSTANT = 22.5 #degrees per second
 STEER_RATE_VARIABLE = 45 #in addition to constant rate. this is max rate
 
@@ -42,11 +86,13 @@ class Converter:
 
     def getDriveCommands(self, buttons):
 
+        #set correct mode
         handleReverseMode(buttons[CONTROLS_MAP[TOGGLE_REVERSE]])
         handleAutoMode(buttons[CONTROLS_MAP[TOGGLE_AUTOMATIC]])
 
         deadMansSwitch = self.hasDeadMansSwitch(buttons[CONTROLS_MAP[DEAD_MANS_SWITCH]])
 
+        #only calculate speed/angle if needed
         if self.auto_mode and deadMansSwitch:
             newangle = self.getNewAngle(buttons[CONTROLS_MAP[STEER]])
             newspeed = self.getNewSpeed(buttons)
@@ -61,7 +107,7 @@ class Converter:
         return (newspeed, newangle, deadMansSwitch, self.auto_mode)
 
 
-
+    #handles flipping between reverse mode and forward mode
     def handleReverseMode(self, toggle_rev_but):
         if toggle_rev_but == 1:
             if self.prev_rev_toggle_but == 0:
@@ -69,7 +115,7 @@ class Converter:
                 
         self.prev_rev_toggle_but = toggle_rev_but
 
-
+    # handles flipping between automatic mode or manual mode
     def handleAutoMode(self, toggle_auto_but):
         if toggle_auto_but == 1:
             if self.prev_auto_toggle_but == 0:
@@ -77,22 +123,21 @@ class Converter:
 
         self.prev_auto_toggle_but = toggle_auto_but
 
+    #handles the dead mans switch
     def hasDeadMansSwitch(self, dms_but):
         return dms_but < 0
-
 
 
     def getNewAngle(self, left_joy):
         targetangle = self.getTargetAngle(left_joy)
 
-        #steering
         if targetangle > self.current_steering_angle:
-            #left
+            #moving left
             rate = self.leftTurnRate(self.current_steering_angle)
             return min(targetangle, self.current_steering_angle + rate)
         
         else:
-            #right
+            #moving right
             rate = self.rightTurnRate(self.current_steering_angle)
             return max(targetangle, self.current_steering_angle - rate)
 
@@ -131,12 +176,12 @@ class Converter:
         
     def getTargetSpeed(self, buttons):
 
-        ds = buttons[CONTROLS_MAP[DYNAMIC_SPEED]]
+        ds = buttons[CONTROLS_MAP[DYNAMIC_SPEED]] #typically the right trigger
         if ds != 1:
-            if mode == 1:
+            if not self.reverse_mode: #forward
                 return ((2 - (ds + 1)) / 2.0) * self.MAX_SPEED
                 
-            else:
+            else: #reverse
                 return ((2 - (ds + 1)) / 2.0) * self.MIN_SPEED
             
         elif buttons[CONTROLS_MAP[FULL_SPEED_FORWARD]] == 1:

@@ -1,8 +1,9 @@
-
+#string-representations of controllers
 PS3 = "ps3"
 
 DEFAULT_GAMEPAD = PS3
 
+#buttons
 LEFT_JOY_X = "left_joy_x"
 A_BUTTON = "a_button"
 B_BUTTON = "b_button"
@@ -14,9 +15,11 @@ RIGHT_TRIGGER = "right_trigger"
 SELECT_BUTTON = "select_button"
 START_BUTTON = "start_button"
 
+#button types
 AXES = 'a'
 BUTTONS = 'b'
 
+#map button to joy message indexes
 GAMEPAD_MAP = {
     LEFT_JOY_X : [(AXES, 0)],
     A_BUTTON : [(BUTTONS, 14)],   
@@ -30,11 +33,12 @@ GAMEPAD_MAP = {
     START_BUTTON : [(BUTTONS, 3)]
 }
 
+#indexes for gamepad map
 gamepads = {
     PS3: 0
 }
 
-
+# driving commands
 STEER = "steer"
 DYNAMIC_SPEED = "dynamic"
 DEAD_MANS_SWITCH = "dmg"
@@ -46,7 +50,7 @@ SLOW_SPEED_FORWARD = "slowAcc"
 FULL_SPEED_BACKWARD = "fullRev"
 SLOW_SPEED_BACKWARD = "slowrev"
 
-
+# control scheme
 CONTROLS_MAP = {
     STEER: LEFT_JOY_X,
     DYNAMIC_SPEED: RIGHT_TRIGGER,
@@ -60,6 +64,7 @@ CONTROLS_MAP = {
     SLOW_SPEED_BACKWARD: B_BUTTON
 }
 
+# returns dict with key = button, value = input
 def getButtons(data, controller):
     i = joysticks[controller]
     d = {}

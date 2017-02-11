@@ -8,10 +8,12 @@ from math import *
 from converter import *
 from controls import *
 
-
+# Subscribes to joy messages and publish appropriate steering and speed commands,
+# Based on a control scheme. Also handles safety buttons and a switch for automatic driving
 class GamepadNode:
     def __init__(self):
         
+        #generate min and max values if not on param server        
         if (not rospy.has_param('min_angle')) or \
                (not rospy.has_param('max_angle')) or \
                (not rospy.has_param('min_speed')) or \
@@ -27,7 +29,6 @@ class GamepadNode:
         gamepad_rate = rospy.get_param('gamepad_rate', 50)
 
         self.converter = Converter(gamepad_rate, min_angle, max_angle, min_speed, max_speed)
-
 
         self.gamepad = rospy.get_param('gamepad_type', DEFAULT_GAMEPAD).lower()
 
@@ -45,8 +46,10 @@ class GamepadNode:
 
     def callback(self,data):
 
+        #dict with key = button, value = input
         buttons = getButtons(data, self.controller)
 
+        #convert button input to driving commands, etc
         (newAngle, newSpeed, deadMansSwitch, autoCtrl) = self.converter.getDriveCommands(buttons)
 
         dms = Bool()
@@ -57,6 +60,7 @@ class GamepadNode:
         ac.data = autoCtrl
         self.autoCtrlPublisher.publish(ac)
 
+        #only publish if needed
         if deadMansSwitch and (not autoCtrl):
             ack = AckermannDrive()
             ack.steering_angle = newAngle
