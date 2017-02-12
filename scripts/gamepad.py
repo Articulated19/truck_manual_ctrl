@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import rospy
-from truck_hw_api.msg import AckermannDrive
+from ackermann_msgs.msg import AckermannDrive
 from truck_hw_api.scripts import interpolate
 from sensor_msgs.msg import Joy
 from std_msgs.msg import Bool
@@ -20,7 +20,8 @@ class GamepadNode:
                (not rospy.has_param('max_speed')):
             interpolate.generateDictionaries()
             interpolate.setRosParams()
-        
+            rospy.logwarning("Couldn't find boundraries on parameter server, \
+                using generated values")
 
         min_angle = rospy.get_param('min_angle')
         max_angle = rospy.get_param('max_angle')
@@ -35,38 +36,41 @@ class GamepadNode:
         if not self.gamepad in gamepads.keys():
             self.gamepad = DEFAULT_GAMEPAD
 
-                
         self.manualDrivePublisher = rospy.Publisher('man_drive', AckermannDrive, queue_size=10)
         self.autoCtrlPublisher = rospy.Publisher('auto_ctrl', Bool, queue_size=10)
         self.dmsPublisher = rospy.Publisher('dead_mans_switch', Bool, queue_size=10)
 
         rospy.init_node('gamepad', anonymous=False)
         rospy.Subscriber('joy', Joy, self.callback)
-
+        rospy.loginfo("init done, subscribed to /joy and publishes to several topics")
 
     def callback(self,data):
 
         #dict with key = button, value = input
-        buttons = getButtons(data, self.controller)
+        try:
+            #raises gamepad map format error
+            buttons = getButtons(data, self.controller)
 
-        #convert button input to driving commands, etc
-        (newAngle, newSpeed, deadMansSwitch, autoCtrl) = self.converter.getDriveCommands(buttons)
+            #convert button input to driving commands, etc
+            (newAngle, newSpeed, deadMansSwitch, autoCtrl) = self.converter.getDriveCommands(buttons)
 
-        dms = Bool()
-        dms.data = deadMansSwitch
-        self.dmsPublisher.publish(dms)
-        
-        ac = Bool()
-        ac.data = autoCtrl
-        self.autoCtrlPublisher.publish(ac)
+            dms = Bool()
+            dms.data = deadMansSwitch
+            self.dmsPublisher.publish(dms)
+            
+            ac = Bool()
+            ac.data = autoCtrl
+            self.autoCtrlPublisher.publish(ac)
 
-        #only publish if needed
-        if deadMansSwitch and (not autoCtrl):
-            ack = AckermannDrive()
-            ack.steering_angle = newAngle
-            ack.speed = newSpeed
-            self.ackermannPub.publish(ack)
-
+            #only publish if needed
+            if deadMansSwitch and (not autoCtrl):
+                ack = AckermannDrive()
+                ack.steering_angle = newAngle
+                ack.speed = newSpeed
+                self.ackermannPub.publish(ack)
+        except GamepadMapFormatError:
+            rospy.logfatal("%s, shutting down", GamepadMapFormatError.message)
+            exit(0)
 
 if __name__ == '__main__':
     j = GamepadNode()

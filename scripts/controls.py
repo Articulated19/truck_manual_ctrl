@@ -64,6 +64,11 @@ CONTROLS_MAP = {
     SLOW_SPEED_BACKWARD: B_BUTTON
 }
 
+class GamepadMapFormatError(Exception):
+     def __str__(self):
+         return "The GAMEPAD_MAP is poorly formatted"
+
+
 # returns dict with key = button, value = input
 def getButtons(data, controller):
     i = joysticks[controller]
@@ -75,5 +80,5 @@ def getButtons(data, controller):
         elif t == BUTTONS:
             d[key] = data.buttons[b]
         else:
-            print "GAMEPAD_MAP poorly formatted"
+            raise GamepadMapFormatError()
     return d
