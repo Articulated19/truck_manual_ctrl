@@ -71,7 +71,7 @@ class GamepadMapFormatError(Exception):
 
 # returns dict with key = button, value = input
 def getButtons(data, controller):
-    i = joysticks[controller]
+    i = gamepads[controller]
     d = {}
     for key, value in GAMEPAD_MAP.iteritems():
         (t, b) = value[i]

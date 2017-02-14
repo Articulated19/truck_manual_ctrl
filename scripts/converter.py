@@ -87,13 +87,13 @@ class Converter:
     def getDriveCommands(self, buttons):
 
         #set correct mode
-        handleReverseMode(buttons[CONTROLS_MAP[TOGGLE_REVERSE]])
-        handleAutoMode(buttons[CONTROLS_MAP[TOGGLE_AUTOMATIC]])
+        self.handleReverseMode(buttons[CONTROLS_MAP[TOGGLE_REVERSE]])
+        self.handleAutoMode(buttons[CONTROLS_MAP[TOGGLE_AUTOMATIC]])
 
         deadMansSwitch = self.hasDeadMansSwitch(buttons[CONTROLS_MAP[DEAD_MANS_SWITCH]])
 
         #only calculate speed/angle if needed
-        if self.auto_mode and deadMansSwitch:
+        if not self.auto_mode and deadMansSwitch:
             newangle = self.getNewAngle(buttons[CONTROLS_MAP[STEER]])
             newspeed = self.getNewSpeed(buttons)
         else:
@@ -104,7 +104,7 @@ class Converter:
         self.current_steering_angle = newangle
 
 
-        return (newspeed, newangle, deadMansSwitch, self.auto_mode)
+        return (newangle, newspeed, deadMansSwitch, self.auto_mode)
 
 
     #handles flipping between reverse mode and forward mode
@@ -160,17 +160,20 @@ class Converter:
 
         if targetSpeed == 0:
             rate = self.getSlowDownRate(self.current_speed)
+	    print rate, self.current_speed
             if self.current_speed >= 0:
-                newspeed = max(0,self.current_speed - rate)
+                print 1
+		newspeed = max(0,self.current_speed - rate)
             else:
+		print 2
                 newspeed = min(0,self.current_speed + rate)
         else:
-            if targetspeed < current_speed:
+            if targetSpeed < self.current_speed:
                 rate = self.getDeAccRate(self.current_speed)
-                newspeed = max(targetspeed, self.current_speed - rate)
+                newspeed = max(targetSpeed, self.current_speed - rate)
             else:
                 rate = self.getAccRate(self.current_speed)
-                newspeed = min(targetspeed, self.current_speed + rate)
+                newspeed = min(targetSpeed, self.current_speed + rate)
 
         return newspeed
         
@@ -209,4 +212,4 @@ class Converter:
         return self.acc_c - self.acc_k * cur_speed + self.acc_m_f
 
     def getSlowDownRate(self, cur_speed):
-        return self.slow_k * abs(cur_speed)
+        return self.slow_c + self.slow_k * abs(cur_speed)

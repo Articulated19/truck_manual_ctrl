@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import rospy
 from ackermann_msgs.msg import AckermannDrive
-from truck_hw_api.scripts import interpolate
+#from truck_hw_api import interpolate
 from sensor_msgs.msg import Joy
 from std_msgs.msg import Bool
 from math import *
@@ -14,19 +14,19 @@ class GamepadNode:
     def __init__(self):
         
         #generate min and max values if not on param server        
-        if (not rospy.has_param('min_angle')) or \
+        """if (not rospy.has_param('min_angle')) or \
                (not rospy.has_param('max_angle')) or \
                (not rospy.has_param('min_speed')) or \
                (not rospy.has_param('max_speed')):
             interpolate.generateDictionaries()
             interpolate.setRosParams()
             rospy.logwarning("Couldn't find boundraries on parameter server, \
-                using generated values")
+                using generated values")"""
 
-        min_angle = rospy.get_param('min_angle')
-        max_angle = rospy.get_param('max_angle')
-        min_speed = rospy.get_param('min_speed')
-        max_speed = rospy.get_param('max_speed')
+        min_angle = rospy.get_param('min_angle', -21)
+        max_angle = rospy.get_param('max_angle', 16)
+        min_speed = rospy.get_param('min_speed', -1)
+        max_speed = rospy.get_param('max_speed', 1.4)
         gamepad_rate = rospy.get_param('gamepad_rate', 50)
 
         self.converter = Converter(gamepad_rate, min_angle, max_angle, min_speed, max_speed)
@@ -49,7 +49,7 @@ class GamepadNode:
         #dict with key = button, value = input
         try:
             #raises gamepad map format error
-            buttons = getButtons(data, self.controller)
+            buttons = getButtons(data, self.gamepad)
 
             #convert button input to driving commands, etc
             (newAngle, newSpeed, deadMansSwitch, autoCtrl) = self.converter.getDriveCommands(buttons)
@@ -67,7 +67,7 @@ class GamepadNode:
                 ack = AckermannDrive()
                 ack.steering_angle = newAngle
                 ack.speed = newSpeed
-                self.ackermannPub.publish(ack)
+                self.manualDrivePublisher.publish(ack)
         except GamepadMapFormatError:
             rospy.logfatal("%s, shutting down", GamepadMapFormatError.message)
             exit(0)
