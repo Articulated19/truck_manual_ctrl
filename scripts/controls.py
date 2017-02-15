@@ -1,5 +1,6 @@
 #string-representations of controllers
 PS3 = "ps3"
+XBOX = "xbox"
 
 DEFAULT_GAMEPAD = PS3
 
@@ -21,21 +22,22 @@ BUTTONS = 'b'
 
 #map button to joy message indexes
 GAMEPAD_MAP = {
-    LEFT_JOY_X : [(AXES, 0)],
-    A_BUTTON : [(BUTTONS, 14)],   
-    B_BUTTON : [(BUTTONS, 13)], 
-    X_BUTTON : [(BUTTONS, 15)],
-    Y_BUTTON : [(BUTTONS, 12)], 
-    LEFT_BUMPER : [(BUTTONS, 10)],
-    LEFT_TRIGGER : [(AXES, 12)],
-    RIGHT_TRIGGER : [(AXES, 13)], 
-    SELECT_BUTTON : [(BUTTONS, 0)], 
-    START_BUTTON : [(BUTTONS, 3)]
+    LEFT_JOY_X : [(AXES, 0), (AXES, 0)],
+    A_BUTTON : [(BUTTONS, 14), (BUTTONS, 0)],   
+    B_BUTTON : [(BUTTONS, 13), (BUTTONS, 1)], 
+    X_BUTTON : [(BUTTONS, 15), (BUTTONS, 2)],
+    Y_BUTTON : [(BUTTONS, 12), (BUTTONS, 3)], 
+    LEFT_BUMPER : [(BUTTONS, 10), (BUTTONS, 4)],
+    LEFT_TRIGGER : [(AXES, 12), (AXES, 2)],
+    RIGHT_TRIGGER : [(AXES, 13), (AXES, 5)], 
+    SELECT_BUTTON : [(BUTTONS, 0), (BUTTONS, 6)], 
+    START_BUTTON : [(BUTTONS, 3), (BUTTONS, 7)]
 }
 
 #indexes for gamepad map
 gamepads = {
-    PS3: 0
+    PS3: 0,
+    XBOX: 1
 }
 
 # driving commands
@@ -81,4 +83,7 @@ def getButtons(data, controller):
             d[key] = data.buttons[b]
         else:
             raise GamepadMapFormatError()
+    if controller == XBOX:
+        pass
+        #d[LEFT_JOY_X] = d[LEFT_JOY_X] * -1
     return d

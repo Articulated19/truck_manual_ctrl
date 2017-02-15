@@ -13,25 +13,18 @@ from controls import *
 class GamepadNode:
     def __init__(self):
         
-        #generate min and max values if not on param server        
-        """if (not rospy.has_param('min_angle')) or \
-               (not rospy.has_param('max_angle')) or \
-               (not rospy.has_param('min_speed')) or \
-               (not rospy.has_param('max_speed')):
-            interpolate.generateDictionaries()
-            interpolate.setRosParams()
-            rospy.logwarning("Couldn't find boundraries on parameter server, \
-                using generated values")"""
-
+        print "sleeping for 1 sec"
+        rospy.sleep(1)
+        
         min_angle = rospy.get_param('min_angle', -21)
         max_angle = rospy.get_param('max_angle', 16)
         min_speed = rospy.get_param('min_speed', -1)
         max_speed = rospy.get_param('max_speed', 1.4)
-        gamepad_rate = rospy.get_param('gamepad_rate', 50)
+        gamepad_rate = rospy.get_param('gamepad/gamepad_rate', 50)
 
         self.converter = Converter(gamepad_rate, min_angle, max_angle, min_speed, max_speed)
 
-        self.gamepad = rospy.get_param('gamepad_type', DEFAULT_GAMEPAD).lower()
+        self.gamepad = rospy.get_param('gamepad/gamepad_type', DEFAULT_GAMEPAD).lower()
 
         if not self.gamepad in gamepads.keys():
             self.gamepad = DEFAULT_GAMEPAD
@@ -45,7 +38,6 @@ class GamepadNode:
         rospy.loginfo("init done, subscribed to /joy and publishes to several topics")
 
     def callback(self,data):
-
         #dict with key = button, value = input
         try:
             #raises gamepad map format error
