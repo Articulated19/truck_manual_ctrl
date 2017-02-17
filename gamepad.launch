@@ -4,7 +4,7 @@
 
   <arg name="gamepad" default="true"/>
   <arg name="gamepad_rate" default="50.0" />
-  <arg name="gamepad_type" default="ps3"/>
+  <arg name="gamepad_type" default="xbox"/>
 
   <group if="$(arg gamepad)">
     <node name="joy_node" pkg="joy" type="joy_node" >
