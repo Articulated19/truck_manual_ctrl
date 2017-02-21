@@ -2,20 +2,19 @@
 
 <launch>
 
-  <arg name="gamepad" default="true"/>
-  <arg name="gamepad_rate" default="50.0" />
-  <arg name="gamepad_type" default="xbox"/>
+  <arg name="rate" default="50.0" />
+  <arg name="type" default="xbox"/>
+  <arg name="input" default="/dev/input/js0"/>
 
-  <group if="$(arg gamepad)">
-    <node name="joy_node" pkg="joy" type="joy_node" >
-      <param name="autorepeat_rate" type="double" value="$(arg gamepad_rate)" />
-      <param name="coalesce_rate" type="double" value="$(eval 1.0 / arg('gamepad_rate'))" />
-    </node>
+<node name="joy_node" pkg="joy" type="joy_node" >
+  <param name="autorepeat_rate" type="double" value="$(arg rate)" />
+  <param name="coalesce_rate" type="double" value="$(eval 1.0 / arg('rate'))" />
+  <param name="dev" type="string" value="$(arg input)"/>
+</node>
 
-    <node name="gamepad" pkg="truck_manual_ctrl" type="gamepad.py">
-      <param name="gamepad_rate" type="double" value="$(arg gamepad_rate)" />
-      <param name="gamepad_type" type="string" value="$(arg gamepad_type)" />
-    </node>
+<node name="gamepad" pkg="truck_manual_ctrl" type="gamepad.py">
+  <param name="rate" type="double" value="$(arg rate)" />
+  <param name="type" type="string" value="$(arg type)" />
+</node>
   
-   </group>
 </launch>

@@ -20,11 +20,11 @@ class GamepadNode:
         max_angle = rospy.get_param('max_angle', 16)
         min_speed = rospy.get_param('min_speed', -1)
         max_speed = rospy.get_param('max_speed', 1.4)
-        gamepad_rate = rospy.get_param('gamepad/gamepad_rate', 50)
+        gamepad_rate = rospy.get_param('gamepad/rate', 50)
 
         self.converter = Converter(gamepad_rate, min_angle, max_angle, min_speed, max_speed)
 
-        self.gamepad = rospy.get_param('gamepad/gamepad_type', DEFAULT_GAMEPAD).lower()
+        self.gamepad = rospy.get_param('gamepad/type', DEFAULT_GAMEPAD).lower()
 
         if not self.gamepad in gamepads.keys():
             self.gamepad = DEFAULT_GAMEPAD
