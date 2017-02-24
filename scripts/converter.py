@@ -44,8 +44,8 @@ This creates more smooth steering/accelerating
 
 """
 
-STEER_RATE_CONSTANT = 20 #degrees per second
-STEER_RATE_VARIABLE = 40 #in addition to constant rate. this is max rate
+STEER_RATE_CONSTANT = 17 #degrees per second
+STEER_RATE_VARIABLE = 35#40 #in addition to constant rate. this is max rate
 
 ACC_RATE_CONSTANT = 1.5 #m/s^2 
 ACC_RATE_VARIABLE = 1.5 #in addition to constant rate. this is max rate

@@ -12,6 +12,7 @@ from controls import *
 # Based on a control scheme. Also handles safety buttons and a switch for automatic driving
 class GamepadNode:
     def __init__(self):
+        self.no_dms_count = 0
         
         print "sleeping for 1 sec"
         rospy.sleep(1)
@@ -46,6 +47,8 @@ class GamepadNode:
             #convert button input to driving commands, etc
             (newAngle, newSpeed, deadMansSwitch, autoCtrl) = self.converter.getDriveCommands(buttons)
 
+            
+             
             dms = Bool()
             dms.data = deadMansSwitch
             self.dmsPublisher.publish(dms)
