@@ -56,6 +56,8 @@ SLOW_DOWN_RATE_VARIABLE = 0.5 #in addition to constant rate. this is max rate. f
 class Converter:
     def __init__(self, joy_rate, min_angle, max_angle, min_speed, max_speed):
         
+        self.prev_journey_start = False
+        
         self.reverse_mode = False
         self.prev_rev_toggle_but = 0
         self.auto_mode = False
@@ -91,7 +93,15 @@ class Converter:
         self.handleAutoMode(buttons[CONTROLS_MAP[TOGGLE_AUTOMATIC]])
 
         deadMansSwitch = self.hasDeadMansSwitch(buttons[CONTROLS_MAP[DEAD_MANS_SWITCH]])
-
+        
+        journey_start = self.hasJourneyStart(buttons[CONTROLS_MAP[JOURNEY_START]])
+        if (not journey_start) and self.prev_journey_start:
+            js_ret = True
+        else:
+            js_ret = False
+        self.prev_journey_start = journey_start
+        
+        
         #only calculate speed/angle if needed
         if not self.auto_mode and deadMansSwitch:
             newangle = self.getNewAngle(buttons[CONTROLS_MAP[STEER]])
@@ -104,7 +114,7 @@ class Converter:
         self.current_steering_angle = newangle
 
 
-        return (newangle, newspeed, deadMansSwitch, self.auto_mode)
+        return (newangle, newspeed, deadMansSwitch, self.auto_mode, js_ret)
 
 
     #handles flipping between reverse mode and forward mode
@@ -127,6 +137,8 @@ class Converter:
     def hasDeadMansSwitch(self, dms_but):
         return dms_but < 0
 
+    def hasJourneyStart(self, js_but):
+        return js_but == 1
 
     def getNewAngle(self, left_joy):
         targetangle = self.getTargetAngle(left_joy)

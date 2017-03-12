@@ -32,6 +32,7 @@ class GamepadNode:
         self.manualDrivePublisher = rospy.Publisher('man_drive', AckermannDrive, queue_size=10)
         self.autoCtrlPublisher = rospy.Publisher('auto_ctrl', Bool, queue_size=10)
         self.dmsPublisher = rospy.Publisher('dead_mans_switch', Bool, queue_size=10)
+        self.journeyStartPublisher = rospy.Publisher('journey_start', Bool, queue_size=10)
 
         rospy.init_node('gamepad', anonymous=False)
         rospy.Subscriber('joy', Joy, self.callback)
@@ -44,8 +45,13 @@ class GamepadNode:
             buttons = getButtons(data, self.gamepad)
 
             #convert button input to driving commands, etc
-            (newAngle, newSpeed, deadMansSwitch, autoCtrl) = self.converter.getDriveCommands(buttons)
+            (newAngle, newSpeed, deadMansSwitch, autoCtrl, js_ret) = self.converter.getDriveCommands(buttons)
 
+            if js_ret:
+                js_msg = Bool()
+                js.data = True
+                self.journeyStartPublisher.publish(js_msg)
+            
             dms = Bool()
             dms.data = deadMansSwitch
             self.dmsPublisher.publish(dms)
