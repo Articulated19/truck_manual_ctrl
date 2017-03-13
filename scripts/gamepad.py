@@ -45,8 +45,15 @@ class GamepadNode:
             buttons = getButtons(data, self.gamepad)
 
             #convert button input to driving commands, etc
-            (newAngle, newSpeed, deadMansSwitch, autoCtrl, js_ret) = self.converter.getDriveCommands(buttons)
+            commands = self.converter.getDriveCommands(buttons)
 
+            js_ret = commands['journey_start']
+            newSpeed = commands['speed']
+            newAngle = commands['angle']
+            deadMansSwitch = commands['dms']
+            autoCtrl = commands['auto_mode']
+            
+            
             if js_ret:
                 js_msg = Bool()
                 js.data = True

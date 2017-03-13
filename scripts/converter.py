@@ -114,7 +114,11 @@ class Converter:
         self.current_steering_angle = newangle
 
 
-        return (newangle, newspeed, deadMansSwitch, self.auto_mode, js_ret)
+        return {'angle': newangle, 
+                'speed': newspeed, 
+                'dms': deadMansSwitch, 
+                'auto_mode': self.auto_mode, 
+                'journey_start': js_ret}
 
 
     #handles flipping between reverse mode and forward mode
