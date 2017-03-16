@@ -32,7 +32,7 @@ class GamepadNode:
         self.manualDrivePublisher = rospy.Publisher('man_drive', AckermannDrive, queue_size=10)
         self.autoCtrlPublisher = rospy.Publisher('auto_ctrl', Bool, queue_size=10)
         self.dmsPublisher = rospy.Publisher('dead_mans_switch', Bool, queue_size=10)
-        self.journeyStartPublisher = rospy.Publisher('journey_start', Bool, queue_size=10)
+        self.journeyStartPublisher = rospy.Publisher('start_journey', Bool, queue_size=10)
 
         rospy.init_node('gamepad', anonymous=False)
         rospy.Subscriber('joy', Joy, self.callback)
@@ -56,7 +56,7 @@ class GamepadNode:
             
             if js_ret:
                 js_msg = Bool()
-                js.data = True
+                js_msg.data = True
                 self.journeyStartPublisher.publish(js_msg)
             
             dms = Bool()

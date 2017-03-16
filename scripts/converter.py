@@ -95,11 +95,14 @@ class Converter:
         deadMansSwitch = self.hasDeadMansSwitch(buttons[CONTROLS_MAP[DEAD_MANS_SWITCH]])
         
         journey_start = self.hasJourneyStart(buttons[CONTROLS_MAP[JOURNEY_START]])
-        if (not journey_start) and self.prev_journey_start:
+        
+        
+        if journey_start and (not self.prev_journey_start):
             js_ret = True
         else:
             js_ret = False
         self.prev_journey_start = journey_start
+        
         
         
         #only calculate speed/angle if needed
