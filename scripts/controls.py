@@ -15,6 +15,7 @@ LEFT_TRIGGER = "left_trigger"
 RIGHT_TRIGGER = "right_trigger"
 SELECT_BUTTON = "select_button"
 START_BUTTON = "start_button"
+DPAD_UP = "dpad_up"
 
 #button types
 AXES = 'a'
@@ -31,7 +32,8 @@ GAMEPAD_MAP = {
     LEFT_TRIGGER : [(AXES, 12), (AXES, 2)],
     RIGHT_TRIGGER : [(AXES, 13), (AXES, 5)], 
     SELECT_BUTTON : [(BUTTONS, 0), (BUTTONS, 6)], 
-    START_BUTTON : [(BUTTONS, 3), (BUTTONS, 7)]
+    START_BUTTON : [(BUTTONS, 3), (BUTTONS, 7)],
+    DPAD_UP: [(BUTTONS, 4), (AXES, 7)]
 }
 
 #indexes for gamepad map
@@ -51,6 +53,7 @@ FAST_SPEED_FORWARD = "fastAcc"
 SLOW_SPEED_FORWARD = "slowAcc"
 FULL_SPEED_BACKWARD = "fullRev"
 SLOW_SPEED_BACKWARD = "slowrev"
+JOURNEY_START = "journey_start"
 
 # control scheme
 CONTROLS_MAP = {
@@ -63,7 +66,8 @@ CONTROLS_MAP = {
     FAST_SPEED_FORWARD: Y_BUTTON,
     SLOW_SPEED_FORWARD: X_BUTTON,
     FULL_SPEED_BACKWARD: LEFT_BUMPER,
-    SLOW_SPEED_BACKWARD: B_BUTTON
+    SLOW_SPEED_BACKWARD: B_BUTTON,
+    JOURNEY_START: DPAD_UP
 }
 
 class GamepadMapFormatError(Exception):
